@@ -24,6 +24,9 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Install System Dependencies
         run: |
           sudo apt-get update
@@ -54,33 +57,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install Cython==0.29.33 "buildozer>=1.5.0"
 
-      - name: Setup Android SDK & Accept Licenses
+      - name: Accept Android SDK Licenses & Install Components
         run: |
-          # Define Android SDK Path expected by Buildozer
-          SDK_DIR="$HOME/.buildozer/android/platform/android-sdk"
-          mkdir -p "$SDK_DIR/cmdline-tools"
+          yes | sdkmanager --licenses || true
+          sdkmanager "platforms;android-33" "build-tools;33.0.2" "platform-tools"
 
-          # Download Command Line Tools
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9441913_latest.zip -O /tmp/cmdline-tools.zip
-          unzip -q /tmp/cmdline-tools.zip -d "$SDK_DIR/cmdline-tools"
-          mv "$SDK_DIR/cmdline-tools/cmdline-tools" "$SDK_DIR/cmdline-tools/latest"
-          rm -f /tmp/cmdline-tools.zip
-
-          # Legacy path symlink for Buildozer lookup
-          mkdir -p "$SDK_DIR/tools"
-          ln -sf "$SDK_DIR/cmdline-tools/latest/bin" "$SDK_DIR/tools/bin"
-
-          # Auto-accept all licenses non-interactively
-          yes | "$SDK_DIR/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$SDK_DIR" --licenses || true
-
-          # Pre-install target platform components
-          "$SDK_DIR/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$SDK_DIR" \
-            "build-tools;33.0.2" \
-            "platforms;android-33" \
-            "platform-tools"
-
-      - name: Build APK with Buildozer
+      - name: Configure Buildozer SDK Paths & Build APK
         run: |
+          # Link installed Android SDK to Buildozer's default directory
+          mkdir -p ~/.buildozer/android/platform
+          ln -sf $ANDROID_HOME ~/.buildozer/android/platform/android-sdk
+
+          # Run buildozer
           buildozer -v android debug
 
       - name: Upload APK Artifact
