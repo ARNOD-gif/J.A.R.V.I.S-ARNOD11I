@@ -2,8 +2,7 @@ name: Build J.A.R.V.I.S APK
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
@@ -11,7 +10,7 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - name: Checkout Code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
@@ -25,33 +24,31 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install System Dependencies & ImageMagick
+      - name: Install System Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            imagemagick \
             build-essential \
             git \
             ffmpeg \
-            libgstreamer1.0-0 \
-            gstreamer1.0-plugins-base \
-            gstreamer1.0-plugins-good \
             libffi-dev \
             libssl-dev \
-            python3-dev \
-            ccache \
+            libtinfo5 \
             zip \
             unzip \
-            openjdk-17-jdk
+            autoconf \
+            libtool \
+            pkg-config \
+            zlib1g-dev \
+            libncurses5-dev \
+            libncursesw5-dev \
+            cmake \
+            ccache
 
       - name: Install Buildozer & Cython
         run: |
           pip install --upgrade pip
-          pip install Cython==0.29.33
-          pip install git+https://github.com/kivy/buildozer.git
-
-      - name: Convert ICO to PNG
-        run: convert config/jarvis.ico[0] config/icon.png
+          pip install buildozer cython==0.29.33
 
       - name: Build APK with Buildozer
         run: |
@@ -60,5 +57,5 @@ jobs:
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: jarvis-apk
+          name: JARVIS-APK
           path: bin/*.apk
