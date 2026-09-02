@@ -12,27 +12,31 @@ package.domain = org.jarvis.ai
 # Source code location
 source.dir = .
 
-# Source files to include
-source.include_exts = py,png,jpg,kv,atlas,json,txt
+# Include subdirectories (actions, config, core, dashboard, memory)
+source.include_dirs = actions, config, core, dashboard, memory
+
+# Include file extensions
+source.include_exts = py, png, jpg, kv, atlas, json, txt, xlsx
+
+# Main file entry point
+source.filename = main.py
 
 # Application version
 version = 1.0.0
 
 # Application requirements
-requirements = python3,kivy,numpy,requests
+requirements = python3, kivy, numpy, requests
 
-# Path to your custom App Icon (place icon.png in your main repo folder)
-icon.filename = %(source.dir)s/icon.png
+# Custom App Icon path (pointing to icon.png in your config folder)
+icon.filename = %(source.dir)s/config/icon.png
 
-# Supported orientations
+# Orientation
 orientation = portrait
 
-# Android permissions
+# Permissions needed
 android.permissions = INTERNET, RECORD_AUDIO
 
-# Android API target
+# Android SDK / Target details
 android.api = 33
 android.minapi = 21
-
-# Target architecture
 android.archs = arm64-v8a
