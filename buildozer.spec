@@ -18,6 +18,7 @@ warn_on_root = 1
 [app:android]
 android.api = 33
 android.minapi = 24
+# Lock to NDK 25b to stop python-for-android build failures
 android.ndk = 25b
 android.accept_sdk_license = True
 android.archs = arm64-v8a
