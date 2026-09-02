@@ -1,5 +1,6 @@
 # J.A.R.V.I.S-ARNOD11I Android
 Download J.A.R.V.I.S.rar APK and Install it If playstore shows any error or blocked from installing just disable playstore and install after install is done enable playstore again.
+Go to https://aistudio.google.com/ Create Your API key paste it in JARVIS API.
 
 
                                           Only for Android Users ⚠️ Caution!
