@@ -24,16 +24,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Fix Apt Mirror & Install System Dependencies
+      - name: Install System Dependencies
         run: |
-          sudo sed -i 's/http:\/\/azure.archive.ubuntu.com/http:\/\/archive.ubuntu.com/g' /etc/apt/sources.list
-          sudo sed -i 's/http:\/\/azure.archive.ubuntu.com/http:\/\/archive.ubuntu.com/g' /etc/apt/sources.list.d/*.list || true
-          
-          sudo apt-get update -o Acquire::ForceIPv4=true -o Acquire::Retries=5
-          sudo apt-get install -y --no-install-recommends \
+          sudo apt-get update
+          sudo apt-get install -y \
             python3-pip \
             build-essential \
             git \
@@ -60,27 +54,41 @@ jobs:
           python -m pip install --upgrade pip
           pip install Cython==0.29.33 "buildozer>=1.5.0"
 
-      - name: Pre-configure Android SDK & Symlinks
+      - name: Setup Android SDK Layout
         run: |
-          # Automatically accept all SDK licenses
-          yes | sdkmanager --licenses || true
-          sdkmanager "platforms;android-33" "build-tools;33.0.2" "platform-tools"
+          SDK_DIR="$HOME/.buildozer/android/platform/android-sdk"
+          mkdir -p "$SDK_DIR/cmdline-tools"
 
-          # Create directory structure expected by Buildozer
-          BUILDOZER_SDK="$HOME/.buildozer/android/platform/android-sdk"
-          mkdir -p "$BUILDOZER_SDK"
+          # Download official Command Line Tools
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9441913_latest.zip -O /tmp/cmdline-tools.zip
+          unzip -q /tmp/cmdline-tools.zip -d "$SDK_DIR/cmdline-tools"
+          mv "$SDK_DIR/cmdline-tools/cmdline-tools" "$SDK_DIR/cmdline-tools/latest"
+          rm -f /tmp/cmdline-tools.zip
 
-          # Symlink system SDK into Buildozer's directory
-          ln -sf $ANDROID_HOME/* "$BUILDOZER_SDK/" || true
+          # Legacy path symlinks expected by Buildozer
+          mkdir -p "$SDK_DIR/tools/bin"
+          ln -sf "$SDK_DIR/cmdline-tools/latest/bin/sdkmanager" "$SDK_DIR/tools/bin/sdkmanager"
 
-          # Create legacy tools symlink required by Buildozer checks
-          mkdir -p "$BUILDOZER_SDK/tools/bin"
-          ln -sf $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "$BUILDOZER_SDK/tools/bin/sdkmanager" || true
+          # Accept licenses directly into the licenses directory
+          mkdir -p "$SDK_DIR/licenses"
+          echo -e "24333f8a637b3702d1927e1501702586f96e3d94\n89330172875f108642f7217869b4e3ce443729b5\nd56f5187479451eabf01fb78af6dfcb131a6481e" > "$SDK_DIR/licenses/android-sdk-license"
+          echo -e "84831b9409646a918e30573bab4c9c91346d8abd" > "$SDK_DIR/licenses/android-sdk-preview-license"
 
-      - name: Build APK with Buildozer (Memory Throttled)
+          # Install platform packages
+          "$SDK_DIR/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$SDK_DIR" \
+            "build-tools;33.0.2" \
+            "platforms;android-33" \
+            "platform-tools"
+
+      - name: Build APK with Buildozer
         env:
           MAKEFLAGS: "-j2"
         run: |
+          # Purge corrupted NDK r28 build directory if present
+          rm -rf ~/.buildozer/android/platform/android-ndk-r28c
+          rm -rf ~/.buildozer/android/platform/build-*
+
+          # Force Buildozer to target NDK 25b
           buildozer -v android debug
 
       - name: Upload APK Artifact
