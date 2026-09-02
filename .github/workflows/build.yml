@@ -43,36 +43,21 @@ jobs:
             zlib1g-dev \
             ccache \
             zip \
-            unzip \
-            wget
+            unzip
 
       - name: Install Python Dependencies & Buildozer
         run: |
           python -m pip install --upgrade pip
           pip install Cython==0.29.33 buildozer
 
-      - name: Pre-install Android Command Line Tools & Accept Licenses
+      - name: Accept Android SDK Licenses
         run: |
-          # Prepare directory layout
-          SDK_DIR="$HOME/.buildozer/android/platform/android-sdk"
-          mkdir -p "$SDK_DIR/cmdline-tools"
-          
-          # Download Android Command Line Tools using wget with retries
-          wget -q --tries=5 --retry-connrefused "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip" -O /tmp/cmdline-tools.zip
-          
-          # Extract command line tools
-          unzip -q /tmp/cmdline-tools.zip -d "$SDK_DIR/cmdline-tools"
-          mv "$SDK_DIR/cmdline-tools/cmdline-tools" "$SDK_DIR/cmdline-tools/latest"
-          rm -f /tmp/cmdline-tools.zip
-
-          # Create legacy tools link expected by older Buildozer checks
-          mkdir -p "$SDK_DIR/tools"
-          ln -sf "$SDK_DIR/cmdline-tools/latest/bin" "$SDK_DIR/tools/bin"
-
-          # Automatically accept all Android SDK licenses
-          yes | "$SDK_DIR/cmdline-tools/latest/bin/sdkmanager" --licenses || true
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
       - name: Build APK with Buildozer
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_NDK_HOME: /usr/local/lib/android/sdk/ndk-bundle
         run: |
           buildozer -v android debug
 
