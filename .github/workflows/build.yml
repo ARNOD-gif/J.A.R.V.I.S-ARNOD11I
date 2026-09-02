@@ -1,14 +1,64 @@
-- name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          pip install buildozer cython==0.29.33
+name: Build J.A.R.V.I.S APK
 
-      - name: Accept Android SDK Licenses
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            python3-pip \
+            build-essential \
+            git \
+            ffmpeg \
+            libssl-dev \
+            libffi-dev \
+            libsqlite3-dev \
+            liblzma-dev \
+            libbz2-dev \
+            libreadline-dev \
+            libncursesw5-dev \
+            tk-dev \
+            zlib1g-dev \
+            ccache \
+            zip \
+            unzip \
+            openjdk-17-jdk
+
+      - name: Install Python Dependencies & Buildozer
+        run: |
+          python -m pip install --upgrade pip
+          pip install Cython==0.29.33 buildozer
+
+      - name: Auto-accept Android SDK Licenses
         run: |
           mkdir -p ~/.buildozer/android/platform/android-sdk/licenses
           echo -e "24333f8a63717244199ba79615a32b02562525b0\n84831b9409646a2b8f22a21725d6767949306307\n7855a97397692e4f05e50529f04137e42d7b7d35" > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
           echo -e "84831b9409646a2b8f22a21725d6767949306307" > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-preview-license
 
-      - name: Build with Buildozer
+      - name: Build APK with Buildozer
         run: |
           yes | buildozer -v android debug
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jarvis-apk
+          path: bin/*.apk
