@@ -13,38 +13,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install system dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y git zip unzip openjdk-17-jdk python3-pip \
-            autoconf libtool pkg-config zlib1g-dev libncurses5-dev \
-            libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
-
-      - name: Cache Buildozer global directory
+      - name: Cache Buildozer directories
         uses: actions/cache@v4
         with:
-          path: ~/.buildozer
-          key: buildozer-global-${{ hashFiles('buildozer.spec') }}
+          path: |
+            .buildozer
+            ~/.buildozer
+          key: buildozer-${{ hashFiles('buildozer.spec') }}
+          restore-keys: |
+            buildozer-
 
-      - name: Cache Buildozer app directory
-        uses: actions/cache@v4
-        with:
-          path: .buildozer
-          key: buildozer-app-${{ hashFiles('buildozer.spec') }}
-
-      - name: Install Buildozer & Cython
+      - name: Build APK using prebuilt Kivy Docker image
         run: |
-          pip install --upgrade pip
-          pip install buildozer cython==0.29.33
-
-      - name: Build APK with Buildozer
-        run: |
-          yes | buildozer android debug
+          docker run --rm \
+            -v "${{ github.workspace }}:/home/user/hostcwd" \
+            -v "${{ github.workspace }}/.buildozer:/home/user/hostcwd/.buildozer" \
+            kivy/buildozer:latest android debug
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
