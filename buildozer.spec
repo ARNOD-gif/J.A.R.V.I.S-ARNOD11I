@@ -1,55 +1,27 @@
 [app]
-
-# (str) Title of your application
-title = J.A.R.V.I.S
-
-# (str) Package name
+# Basic Information
+title = JARVIS
 package.name = jarvis
+package.domain = org.jarvis
 
-# (str) Package domain (needed for android packaging)
-package.domain = org.jarvis.ai
-
-# (str) Source code where the main.py live
+# Source Files
 source.dir = .
+source.include_exts = py,png,jpg,kv,atlas,json,txt
 
-# (list) Source files to include (python files, images, text, datasets)
-source.include_exts = py, png, jpg, kv, atlas, json, txt, xlsx, ico
-
-# (list) List of directory to include
-source.include_dirs = actions, config, core, dashboard, memory
-
-# (str) Application versioning
+# Version
 version = 1.0.0
 
-# (list) Application requirements
-# Comma separated e.g. requirements = sqlite3,kivy
-requirements = python3, kivy, numpy, requests
+# Requirements (Matching your cleaned requirements)
+requirements = python3,kivy,google-genai,google-generativeai,pillow,requests,beautifulsoup4,ddgs,numpy,youtube-transcript-api,python-pptx,fastapi,uvicorn,cryptography,python-multipart,qrcode
 
-# (str) Custom icon path (points to the png generated during build)
-icon.filename = %(source.dir)s/config/icon.png
+# Permissions required for Microphone, Internet, and Audio Output
+android.permissions = INTERNET, RECORD_AUDIO, MODIFY_AUDIO_SETTINGS, WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE, CAMERA
 
-# (str) Supported orientations (one of landscape, sensorLandscape, portrait or all)
-orientation = portrait
-
-# (list) Permissions
-android.permissions = INTERNET, RECORD_AUDIO, READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE
-
-# (int) Target Android API
+# Android Specific Configuration
 android.api = 33
-
-# (int) Minimum API supported
 android.minapi = 21
-
-# (list) List of Android architectures to build for
 android.archs = arm64-v8a, armeabi-v7a
+android.allow_backup = True
 
-# (bool) Indicate whether the screen should stay on
+# Prevent screen sleep while JARVIS is active
 android.wakelock = True
-
-[buildozer]
-
-# (int) Log level (0 = error only, 1 = info, 2 = debug (with command output))
-log_level = 2
-
-# (int) Display warning if buildozer is run as root (0 = false, 1 = true)
-warn_on_root = 1
