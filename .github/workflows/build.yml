@@ -54,25 +54,24 @@ jobs:
           python -m pip install --upgrade pip
           pip install Cython==0.29.33 "buildozer>=1.5.0"
 
-      - name: Setup Buildozer SDK Layout & Install Tools
+      - name: Setup Android SDK Layout
         run: |
+          set -e
           SDK_DIR="$HOME/.buildozer/android/platform/android-sdk"
           mkdir -p "$SDK_DIR/cmdline-tools"
 
-          # 1. Download official Android command line tools
+          # Download official Command Line Tools
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-9441913_latest.zip -O /tmp/cmdline-tools.zip
           unzip -q /tmp/cmdline-tools.zip -d "$SDK_DIR/cmdline-tools"
           mv "$SDK_DIR/cmdline-tools/cmdline-tools" "$SDK_DIR/cmdline-tools/latest"
           rm -f /tmp/cmdline-tools.zip
 
-          # 2. Fix the "tools/bin/sdkmanager does not exist" error by creating legacy symlink
-          mkdir -p "$SDK_DIR/tools"
-          ln -sf "$SDK_DIR/cmdline-tools/latest/bin" "$SDK_DIR/tools/bin"
+          # Legacy path symlinks expected by Buildozer
+          mkdir -p "$SDK_DIR/tools/bin"
+          ln -sf "$SDK_DIR/cmdline-tools/latest/bin/sdkmanager" "$SDK_DIR/tools/bin/sdkmanager"
 
-          # 3. Accept all Android SDK licenses non-interactively
+          # Accept licenses and install platform packages
           yes | "$SDK_DIR/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$SDK_DIR" --licenses || true
-
-          # 4. Pre-install required build components
           "$SDK_DIR/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$SDK_DIR" \
             "build-tools;33.0.2" \
             "platforms;android-33" \
