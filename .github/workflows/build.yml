@@ -21,7 +21,8 @@ jobs:
         run: convert config/jarvis.ico[0] config/icon.png
 
       - name: Build APK with Buildozer
-        uses: kivy/buildozer-action@v1
+        uses: ArtemSBulgakov/buildozer-action@v1
+        id: buildozer
         with:
           command: buildozer android debug
           buildozer_version: master
