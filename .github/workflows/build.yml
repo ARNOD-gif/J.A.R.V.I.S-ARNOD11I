@@ -24,10 +24,14 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install System Dependencies
+      - name: Fix Apt Mirror & Install System Dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
+          # Replace slow Azure mirror with main Ubuntu archive mirror
+          sudo sed -i 's/http:\/\/azure.archive.ubuntu.com/http:\/\/archive.ubuntu.com/g' /etc/apt/sources.list
+          sudo sed -i 's/http:\/\/azure.archive.ubuntu.com/http:\/\/archive.ubuntu.com/g' /etc/apt/sources.list.d/*.list || true
+          
+          sudo apt-get update -o Acquire::ForceIPv4=true -o Acquire::Retries=5
+          sudo apt-get install -y --no-install-recommends \
             python3-pip \
             build-essential \
             git \
