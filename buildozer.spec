@@ -6,8 +6,7 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,json,txt,wav,mp3
 version = 0.1
 
-# App requirements
-requirements = python3,kivy,requests,urllib3,certifi,idna,charset-normalizer
+requirements = python3,kivy
 
 orientation = portrait
 fullscreen = 0
