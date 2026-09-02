@@ -13,64 +13,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Build APK with Buildozer Action
+        uses: ArtemSydoryk/buildozer-action@v1
         with:
-          python-version: '3.10'
-
-      - name: Set up Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Install System Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            python3-pip \
-            build-essential \
-            git \
-            ffmpeg \
-            libssl-dev \
-            libffi-dev \
-            libsqlite3-dev \
-            liblzma-dev \
-            libbz2-dev \
-            libreadline-dev \
-            libncursesw5-dev \
-            tk-dev \
-            zlib1g-dev \
-            ccache \
-            zip \
-            unzip
-
-      - name: Install Python Dependencies & Buildozer
-        run: |
-          python -m pip install --upgrade pip
-          pip install Cython==0.29.33 buildozer
-
-      - name: Link Pre-installed Android SDK & Setup Build-Tools
-        run: |
-          # Create Buildozer's Android SDK target folder structure
-          BUILDOZER_SDK="$HOME/.buildozer/android/platform/android-sdk"
-          mkdir -p "$BUILDOZER_SDK"
-
-          # Link system pre-installed SDK components to Buildozer SDK directory
-          ln -s /usr/local/lib/android/sdk/build-tools "$BUILDOZER_SDK/build-tools"
-          ln -s /usr/local/lib/android/sdk/platforms "$BUILDOZER_SDK/platforms"
-          ln -s /usr/local/lib/android/sdk/platform-tools "$BUILDOZER_SDK/platform-tools"
-          ln -s /usr/local/lib/android/sdk/tools "$BUILDOZER_SDK/tools"
-
-          # Accept all SDK licenses
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-
-          # Ensure target build-tools and platform are explicitly installed
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2" "platforms;android-33" "platform-tools"
-
-      - name: Build APK with Buildozer
-        run: |
-          buildozer -v android debug
+          command: buildozer -v android debug
+          buildozer_version: master
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
