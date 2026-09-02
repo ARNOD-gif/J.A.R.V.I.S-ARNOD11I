@@ -24,9 +24,6 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Install System Dependencies
         run: |
           sudo apt-get update
@@ -52,23 +49,37 @@ jobs:
             pkg-config \
             cmake
 
-      - name: Install Python Dependencies & Buildozer
+      - name: Install Cython & Buildozer
         run: |
           python -m pip install --upgrade pip
           pip install Cython==0.29.33 "buildozer>=1.5.0"
 
-      - name: Accept Android SDK Licenses & Install Components
+      - name: Setup Buildozer SDK Layout & Install Tools
         run: |
-          yes | sdkmanager --licenses || true
-          sdkmanager "platforms;android-33" "build-tools;33.0.2" "platform-tools"
+          SDK_DIR="$HOME/.buildozer/android/platform/android-sdk"
+          mkdir -p "$SDK_DIR/cmdline-tools"
 
-      - name: Configure Buildozer SDK Paths & Build APK
+          # 1. Download official Android command line tools
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9441913_latest.zip -O /tmp/cmdline-tools.zip
+          unzip -q /tmp/cmdline-tools.zip -d "$SDK_DIR/cmdline-tools"
+          mv "$SDK_DIR/cmdline-tools/cmdline-tools" "$SDK_DIR/cmdline-tools/latest"
+          rm -f /tmp/cmdline-tools.zip
+
+          # 2. Fix the "tools/bin/sdkmanager does not exist" error by creating legacy symlink
+          mkdir -p "$SDK_DIR/tools"
+          ln -sf "$SDK_DIR/cmdline-tools/latest/bin" "$SDK_DIR/tools/bin"
+
+          # 3. Accept all Android SDK licenses non-interactively
+          yes | "$SDK_DIR/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$SDK_DIR" --licenses || true
+
+          # 4. Pre-install required build components
+          "$SDK_DIR/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$SDK_DIR" \
+            "build-tools;33.0.2" \
+            "platforms;android-33" \
+            "platform-tools"
+
+      - name: Build APK with Buildozer
         run: |
-          # Link installed Android SDK to Buildozer's default directory
-          mkdir -p ~/.buildozer/android/platform
-          ln -sf $ANDROID_HOME ~/.buildozer/android/platform/android-sdk
-
-          # Run buildozer
           buildozer -v android debug
 
       - name: Upload APK Artifact
