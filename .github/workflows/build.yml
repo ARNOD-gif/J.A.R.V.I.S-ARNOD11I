@@ -37,29 +37,28 @@ jobs:
           python -m pip install --upgrade pip
           pip install Cython==0.29.33 "buildozer>=1.5.0"
 
-      - name: Configure SDK Symlinks for Buildozer
+      - name: Configure SDK Layout
         run: |
-          # Create directory structure expected by Buildozer
           BUILDOZER_SDK="$HOME/.buildozer/android/platform/android-sdk"
           mkdir -p "$BUILDOZER_SDK"
-
-          # Symlink runner SDK into Buildozer directory
           ln -sf $ANDROID_HOME/* "$BUILDOZER_SDK/" || true
 
-          # Accept SDK licenses
           yes | sdkmanager --licenses || true
           sdkmanager "platforms;android-33" "build-tools;33.0.2" "platform-tools"
 
-          # Legacy tools path needed by Buildozer checks
           mkdir -p "$BUILDOZER_SDK/tools/bin"
           ln -sf $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "$BUILDOZER_SDK/tools/bin/sdkmanager" || true
 
       - name: Build APK with Buildozer
         env:
           MAKEFLAGS: "-j2"
+          # Unset system-level NDK overrides so Buildozer controls the version
+          ANDROID_NDK_HOME: ""
+          ANDROID_NDK_ROOT: ""
+          ANDROID_NDK: ""
         run: |
-          # Purge invalid NDK builds if present
-          rm -rf ~/.buildozer/android/platform/android-ndk-r28c
+          # Clean out incompatible NDK builds
+          rm -rf ~/.buildozer/android/platform/android-ndk-r*
           rm -rf ~/.buildozer/android/platform/build-*
 
           buildozer -v android debug
