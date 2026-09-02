@@ -50,18 +50,25 @@ jobs:
           python -m pip install --upgrade pip
           pip install Cython==0.29.33 buildozer
 
-      - name: Install Android Build Tools & Accept Licenses
+      - name: Link Pre-installed Android SDK & Setup Build-Tools
         run: |
-          # Accept licenses for runner's Android SDK
+          # Create Buildozer's Android SDK target folder structure
+          BUILDOZER_SDK="$HOME/.buildozer/android/platform/android-sdk"
+          mkdir -p "$BUILDOZER_SDK"
+
+          # Link system pre-installed SDK components to Buildozer SDK directory
+          ln -s /usr/local/lib/android/sdk/build-tools "$BUILDOZER_SDK/build-tools"
+          ln -s /usr/local/lib/android/sdk/platforms "$BUILDOZER_SDK/platforms"
+          ln -s /usr/local/lib/android/sdk/platform-tools "$BUILDOZER_SDK/platform-tools"
+          ln -s /usr/local/lib/android/sdk/tools "$BUILDOZER_SDK/tools"
+
+          # Accept all SDK licenses
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          
-          # Install build-tools and platform-tools explicitly
+
+          # Ensure target build-tools and platform are explicitly installed
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2" "platforms;android-33" "platform-tools"
 
       - name: Build APK with Buildozer
-        env:
-          ANDROID_HOME: /usr/local/lib/android/sdk
-          ANDROID_NDK_HOME: /usr/local/lib/android/sdk/ndk/25.2.9519653
         run: |
           buildozer -v android debug
 
