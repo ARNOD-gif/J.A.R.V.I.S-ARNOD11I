@@ -68,7 +68,7 @@ jobs:
           mkdir -p "$SDK_DIR/tools/bin"
           ln -sf "$SDK_DIR/cmdline-tools/latest/bin/sdkmanager" "$SDK_DIR/tools/bin/sdkmanager"
 
-          # Pre-accept all licenses directly into the licenses directory
+          # Pre-accept licenses directly into the licenses directory
           mkdir -p "$SDK_DIR/licenses"
           echo -e "24333f8a637b3702d1927e1501702586f96e3d94\n89330172875f108642f7217869b4e3ce443729b5\nd56f5187479451eabf01fb78af6dfcb131a6481e" > "$SDK_DIR/licenses/android-sdk-license"
           echo -e "84831b9409646a918e30573bab4c9c91346d8abd" > "$SDK_DIR/licenses/android-sdk-preview-license"
@@ -76,7 +76,9 @@ jobs:
           # Install API components
           "$SDK_DIR/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$SDK_DIR" "platforms;android-33" "build-tools;33.0.2" "platform-tools"
 
-      - name: Build APK with Buildozer
+      - name: Build APK with Buildozer (Memory Throttled)
+        env:
+          MAKEFLAGS: "-j2"
         run: |
           buildozer -v android debug
 
