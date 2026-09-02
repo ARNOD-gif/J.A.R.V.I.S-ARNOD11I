@@ -8,14 +8,22 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Install ImageMagick
-        run: sudo apt-get update && sudo apt-get install -y imagemagick
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install Dependencies & ImageMagick
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick build-essential ccache git libffi-dev libssl-dev python3-dev
 
       - name: Convert ICO to PNG
         run: convert config/jarvis.ico[0] config/icon.png
