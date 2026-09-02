@@ -19,8 +19,6 @@ android.archs = arm64-v8a
 android.allow_backup = True
 android.permissions = INTERNET
 
-p4a.branch = master
-
 [buildozer]
 log_level = 2
 warn_on_root = 1
