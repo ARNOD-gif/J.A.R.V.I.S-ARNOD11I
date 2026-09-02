@@ -43,27 +43,41 @@ jobs:
             zlib1g-dev \
             ccache \
             zip \
-            unzip
+            unzip \
+            autoconf \
+            libtool \
+            pkg-config \
+            cmake
 
       - name: Install Python Dependencies & Buildozer
         run: |
           python -m pip install --upgrade pip
-          pip install Cython==0.29.33 buildozer
+          pip install Cython==0.29.33 "buildozer>=1.5.0"
 
-      - name: Configure Android SDK Paths & Accept Licenses
+      - name: Setup Android SDK & Accept Licenses
         run: |
-          # Create internal sdkmanager symlink expected by Buildozer
-          mkdir -p ~/.buildozer/android/platform/android-sdk/tools/bin
-          ln -sf /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
+          # Define Android SDK Path expected by Buildozer
+          SDK_DIR="$HOME/.buildozer/android/platform/android-sdk"
+          mkdir -p "$SDK_DIR/cmdline-tools"
 
-          # Link build-tools and platforms
-          mkdir -p ~/.buildozer/android/platform/android-sdk
-          ln -sf /usr/local/lib/android/sdk/build-tools ~/.buildozer/android/platform/android-sdk/build-tools
-          ln -sf /usr/local/lib/android/sdk/platforms ~/.buildozer/android/platform/android-sdk/platforms
-          ln -sf /usr/local/lib/android/sdk/platform-tools ~/.buildozer/android/platform/android-sdk/platform-tools
+          # Download Command Line Tools
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9441913_latest.zip -O /tmp/cmdline-tools.zip
+          unzip -q /tmp/cmdline-tools.zip -d "$SDK_DIR/cmdline-tools"
+          mv "$SDK_DIR/cmdline-tools/cmdline-tools" "$SDK_DIR/cmdline-tools/latest"
+          rm -f /tmp/cmdline-tools.zip
 
-          # Pre-accept licenses
-          yes | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          # Legacy path symlink for Buildozer lookup
+          mkdir -p "$SDK_DIR/tools"
+          ln -sf "$SDK_DIR/cmdline-tools/latest/bin" "$SDK_DIR/tools/bin"
+
+          # Auto-accept all licenses non-interactively
+          yes | "$SDK_DIR/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$SDK_DIR" --licenses || true
+
+          # Pre-install target platform components
+          "$SDK_DIR/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$SDK_DIR" \
+            "build-tools;33.0.2" \
+            "platforms;android-33" \
+            "platform-tools"
 
       - name: Build APK with Buildozer
         run: |
