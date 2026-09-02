@@ -13,11 +13,61 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build APK using Official Buildozer Docker Image
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install System Dependencies
         run: |
-          docker run --rm \
-            --volume "$GITHUB_WORKSPACE:/home/user/hostpython" \
-            kivy/buildozer android debug
+          sudo apt-get update
+          sudo apt-get install -y \
+            python3-pip \
+            build-essential \
+            git \
+            ffmpeg \
+            libssl-dev \
+            libffi-dev \
+            libsqlite3-dev \
+            liblzma-dev \
+            libbz2-dev \
+            libreadline-dev \
+            libncursesw5-dev \
+            tk-dev \
+            zlib1g-dev \
+            ccache \
+            zip \
+            unzip
+
+      - name: Install Python Dependencies & Buildozer
+        run: |
+          python -m pip install --upgrade pip
+          pip install Cython==0.29.33 buildozer
+
+      - name: Configure Android SDK Paths & Accept Licenses
+        run: |
+          # Create internal sdkmanager symlink expected by Buildozer
+          mkdir -p ~/.buildozer/android/platform/android-sdk/tools/bin
+          ln -sf /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
+
+          # Link build-tools and platforms
+          mkdir -p ~/.buildozer/android/platform/android-sdk
+          ln -sf /usr/local/lib/android/sdk/build-tools ~/.buildozer/android/platform/android-sdk/build-tools
+          ln -sf /usr/local/lib/android/sdk/platforms ~/.buildozer/android/platform/android-sdk/platforms
+          ln -sf /usr/local/lib/android/sdk/platform-tools ~/.buildozer/android/platform/android-sdk/platform-tools
+
+          # Pre-accept licenses
+          yes | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
+      - name: Build APK with Buildozer
+        run: |
+          buildozer -v android debug
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
