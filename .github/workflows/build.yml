@@ -2,9 +2,7 @@ name: Build J.A.R.V.I.S APK
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "master" ]
   workflow_dispatch:
 
 jobs:
@@ -19,6 +17,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
       - name: Install System Dependencies
         run: |
@@ -39,23 +43,27 @@ jobs:
             zlib1g-dev \
             ccache \
             zip \
-            unzip \
-            openjdk-17-jdk
+            unzip
 
       - name: Install Python Dependencies & Buildozer
         run: |
           python -m pip install --upgrade pip
           pip install Cython==0.29.33 buildozer
 
-      - name: Auto-accept Android SDK Licenses
+      - name: Set up Android SDK & Accept Licenses
         run: |
-          mkdir -p ~/.buildozer/android/platform/android-sdk/licenses
-          echo -e "24333f8a63717244199ba79615a32b02562525b0\n84831b9409646a2b8f22a21725d6767949306307\n7855a97397692e4f05e50529f04137e42d7b7d35" > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
-          echo -e "84831b9409646a2b8f22a21725d6767949306307" > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-preview-license
+          mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools
+          cd ~/.buildozer/android/platform/android-sdk/cmdline-tools
+          curl -sS -o cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-9441913_latest.zip
+          unzip -q cmdline-tools.zip
+          mv cmdline-tools latest
+          
+          # Accept all SDK licenses
+          yes | ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
       - name: Build APK with Buildozer
         run: |
-          yes | buildozer -v android debug
+          buildozer -v android debug
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
