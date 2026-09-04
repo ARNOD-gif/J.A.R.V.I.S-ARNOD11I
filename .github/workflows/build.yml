@@ -43,7 +43,8 @@ jobs:
             imagemagick \
             zlib1g-dev \
             gfortran \
-            libltdl-dev
+            libltdl-dev \
+            libsqlite3-dev
 
       - name: Install Cython & Buildozer
         run: |
