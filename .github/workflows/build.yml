@@ -50,21 +50,23 @@ jobs:
             unzip \
             autoconf \
             libtool \
-            pkg-config
+            pkg-config \
+            cmake
 
-      - name: Install Buildozer and Dependencies
+      - name: Install Buildozer & Dependencies
         run: |
-          pip install --upgrade pip
-          pip install "cython<3.0.0"
-          pip install buildozer
+          python -m pip install --upgrade pip setuptools
+          pip install "Cython==0.29.36" "buildozer>=1.5.0" "python-for-android>=2024.1.21"
 
       - name: Build APK with Buildozer
+        env:
+          ACCEPT_SDK_LICENSES: "true"
         run: |
-          # Automatically accept licenses and run build
-          yes | buildozer -v android debug
+          buildozer -v android debug
 
       - name: Upload APK Artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: package-debug-apk
+          name: jarvis-apk
           path: bin/*.apk
