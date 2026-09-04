@@ -24,7 +24,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install System Dependencies
+      - name: Install System Dependencies & ImageMagick
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
@@ -39,52 +39,25 @@ jobs:
             autoconf \
             libtool \
             pkg-config \
-            cmake
+            cmake \
+            imagemagick
 
       - name: Install Cython & Buildozer
         run: |
           python -m pip install --upgrade pip setuptools
           pip install "Cython==0.29.36" "buildozer>=1.5.0" "python-for-android>=2024.1.21"
 
-      - name: Pre-install Android SDK Components
+      - name: Pre-accept SDK Licenses
         run: |
-          # Define SDK target path
-          BUILDOZER_SDK="$HOME/.buildozer/android/platform/android-sdk"
-          mkdir -p "$BUILDOZER_SDK"
-
-          # Pre-accept all licenses silently
+          mkdir -p "$ANDROID_HOME/licenses"
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root="$ANDROID_HOME" --licenses > /dev/null 2>&1 || true
-
-          # Install Platform 33 & Build-Tools 33.0.2 explicitly using system SDK
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root="$ANDROID_HOME" \
-            "platforms;android-33" \
-            "build-tools;33.0.2" \
-            "platform-tools"
-
-          # Copy system SDK into Buildozer platform directory without overwriting existing files
-          cp -r --update=none $ANDROID_HOME/* "$BUILDOZER_SDK/" || true
-
-      - name: Setup Android NDK r25b
-        run: |
-          mkdir -p ~/.buildozer/android/platform
-          curl -L -sS https://dl.google.com/android/repository/android-ndk-r25b-linux.zip -o /tmp/ndk.zip
-          unzip -q /tmp/ndk.zip -d ~/.buildozer/android/platform/
-          rm -f /tmp/ndk.zip
 
       - name: Build APK with Buildozer
         env:
           MAKEFLAGS: "-j2"
           _JAVA_OPTIONS: "-Xmx4096m -XX:+UseG1GC"
           GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.jvmargs='-Xmx4096m -XX:MaxMetaspaceSize=1024m'"
-          ANDROID_NDK_HOME: "/home/runner/.buildozer/android/platform/android-ndk-r25b"
-          ANDROID_NDK_ROOT: "/home/runner/.buildozer/android/platform/android-ndk-r25b"
-          ANDROID_NDK: "/home/runner/.buildozer/android/platform/android-ndk-r25b"
-          APP_ANDROID_NDK_HOME: "/home/runner/.buildozer/android/platform/android-ndk-r25b"
         run: |
-          # Remove higher default NDK versions if generated dynamically
-          rm -rf ~/.buildozer/android/platform/android-ndk-r28*
-          rm -rf ~/.buildozer/android/platform/build-*
-
           buildozer -v android debug
 
       - name: Upload APK Artifact
