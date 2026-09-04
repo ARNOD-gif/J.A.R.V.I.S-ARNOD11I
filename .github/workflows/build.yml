@@ -49,12 +49,15 @@ jobs:
 
       - name: Setup Android SDK and Aidl
         run: |
-          # 1. Accept SDK Licenses silently
+          # 1. Pre-accept SDK licenses directly to disk (No pipes, no 'yes' command)
           mkdir -p "$ANDROID_HOME/licenses"
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root="$ANDROID_HOME" --licenses > /dev/null 2>&1 || true
+          echo -e "\n89330d32252cd225f11c5fe196d1112b640a1da9\nd56f5187479451eabf01fb78af6d623503d065a9\n24333f8a63718c309d6314270d1e4f0250b1b2d5" > "$ANDROID_HOME/licenses/android-sdk-license"
+          echo -e "\n84831b94fe1430d0feb6500911a0873887256e35" > "$ANDROID_HOME/licenses/android-sdk-preview-license"
+          echo -e "\nd9050156456102e513847e2606e872d671276082" > "$ANDROID_HOME/licenses/android-googletv-license"
+          echo -e "\n601007b94ed797dd23565d7bd047c8926f799fcd" > "$ANDROID_HOME/licenses/android-sdk-arm-dbt-license"
 
           # 2. Install required Platform 33 & Build-Tools containing aidl
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root="$ANDROID_HOME" "platforms;android-33" "build-tools;33.0.2" "platform-tools" --no_progress > /dev/null 2>&1
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root="$ANDROID_HOME" "platforms;android-33" "build-tools;33.0.2" "platform-tools" --no_progress
 
           # 3. Create Buildozer SDK directory structure
           BUILDOZER_SDK="$HOME/.buildozer/android/platform/android-sdk"
