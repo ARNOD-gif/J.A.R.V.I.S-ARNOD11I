@@ -47,10 +47,21 @@ jobs:
           python -m pip install --upgrade pip setuptools
           pip install "Cython==0.29.36" "buildozer>=1.5.0" "python-for-android>=2024.1.21"
 
-      - name: Pre-accept SDK Licenses
+      - name: Setup Android SDK and Aidl
         run: |
+          # 1. Accept SDK Licenses silently
           mkdir -p "$ANDROID_HOME/licenses"
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root="$ANDROID_HOME" --licenses > /dev/null 2>&1 || true
+
+          # 2. Install required Platform 33 & Build-Tools containing aidl
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root="$ANDROID_HOME" "platforms;android-33" "build-tools;33.0.2" "platform-tools" --no_progress > /dev/null 2>&1
+
+          # 3. Create Buildozer SDK directory structure
+          BUILDOZER_SDK="$HOME/.buildozer/android/platform/android-sdk"
+          mkdir -p "$BUILDOZER_SDK"
+
+          # 4. Copy system SDK components into Buildozer's folder so aidl is immediately found
+          cp -r $ANDROID_HOME/* "$BUILDOZER_SDK/" || true
 
       - name: Build APK with Buildozer
         env:
