@@ -24,7 +24,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install System Dependencies & Compilers
+      - name: Install System C/C++ Header Dependencies & Compilers
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
@@ -44,28 +44,29 @@ jobs:
             zlib1g-dev \
             gfortran \
             libltdl-dev \
-            libsqlite3-dev
+            libsqlite3-dev \
+            portaudio19-dev \
+            libasound2-dev \
+            ffmpeg \
+            pulseaudio
 
-      - name: Install Cython & Buildozer
+      - name: Install Cython & Buildozer Tools
         run: |
           python -m pip install --upgrade pip setuptools
           pip install "Cython==0.29.36" "buildozer>=1.5.0" "python-for-android>=2024.1.21"
 
-      - name: Prepare Android SDK & Resolve SDK Paths
+      - name: Prepare Android SDK & Symlink legacy tools
         run: |
-          # 1. Setup Buildozer SDK target directory
           BUILDOZER_SDK="$HOME/.buildozer/android/platform/android-sdk"
           mkdir -p "$BUILDOZER_SDK/licenses"
 
-          # 2. Write accepted SDK license hashes directly to avoid interactive prompt crashes
+          # Write pre-accepted licenses directly
           LICENSES_CONTENT="\n89330d32252cd225f11c5fe196d1112b640a1da9\nd56f5187479451eabf01fb78af6d623503d065a9\n24333f8a63718c309d6314270d1e4f0250b1b2d5\n84831b94fe1430d0feb6500911a0873887256e35\nd9050156456102e513847e2606e872d671276082\n601007b94ed797dd23565d7bd047c8926f799fcd"
           echo -e "$LICENSES_CONTENT" > "$BUILDOZER_SDK/licenses/android-sdk-license"
 
-          # 3. Copy system cmdline-tools into Buildozer's SDK path
           mkdir -p "$BUILDOZER_SDK/cmdline-tools"
           cp -r $ANDROID_HOME/cmdline-tools/* "$BUILDOZER_SDK/cmdline-tools/"
 
-          # 4. Symlink legacy path tools/bin -> cmdline-tools/latest/bin for Buildozer check compatibility
           mkdir -p "$BUILDOZER_SDK/tools"
           ln -sf "$BUILDOZER_SDK/cmdline-tools/latest/bin" "$BUILDOZER_SDK/tools/bin"
 
