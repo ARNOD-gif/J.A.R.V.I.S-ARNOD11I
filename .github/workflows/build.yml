@@ -61,8 +61,8 @@ jobs:
             "build-tools;33.0.2" \
             "platform-tools"
 
-          # Symlink system SDK into Buildozer platform directory to skip re-downloads
-          cp -rn $ANDROID_HOME/* "$BUILDOZER_SDK/" || true
+          # Copy system SDK into Buildozer platform directory without overwriting existing files
+          cp -r --update=none $ANDROID_HOME/* "$BUILDOZER_SDK/" || true
 
       - name: Setup Android NDK r25b
         run: |
