@@ -18,7 +18,13 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-python-version: '3.10'
+        python-version: '3.10'
+
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
 
     - name: Install System Dependencies
       run: |
@@ -40,7 +46,6 @@ jobs:
           gstreamer1.0-plugins-base \
           gstreamer1.0-plugins-good \
           ccache \
-          openjdk-17-jdk \
           zip \
           unzip
 
@@ -49,6 +54,21 @@ jobs:
         pip install --upgrade pip
         pip install "cython<3.0.0"
         pip install buildozer
+
+    - name: Pre-install Android SDK Build-Tools (Fixes Aidl Error)
+      run: |
+        mkdir -p $HOME/.buildozer/android/platform/android-sdk
+        export ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
+        
+        # Download Android Command Line Tools
+        wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
+        unzip -q cmdline-tools.zip -d $ANDROID_HOME/cmdline-tools
+        mkdir -p $ANDROID_HOME/cmdline-tools/latest
+        mv $ANDROID_HOME/cmdline-tools/cmdline-tools/* $ANDROID_HOME/cmdline-tools/latest/ 2>/dev/null || true
+        
+        # Accept Licenses and Install Build-Tools
+        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2" "platforms;android-33" "platform-tools"
 
     - name: Build APK with Buildozer
       run: |
