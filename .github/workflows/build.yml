@@ -46,22 +46,30 @@ jobs:
           python -m pip install --upgrade pip setuptools
           pip install "Cython==0.29.36" "buildozer>=1.5.0" "python-for-android>=2024.1.21"
 
+      - name: Pre-install Android SDK Components
+        run: |
+          # Define SDK target path
+          BUILDOZER_SDK="$HOME/.buildozer/android/platform/android-sdk"
+          mkdir -p "$BUILDOZER_SDK"
+
+          # Pre-accept all licenses silently
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root="$ANDROID_HOME" --licenses > /dev/null 2>&1 || true
+
+          # Install Platform 33 & Build-Tools 33.0.2 explicitly using system SDK
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root="$ANDROID_HOME" \
+            "platforms;android-33" \
+            "build-tools;33.0.2" \
+            "platform-tools"
+
+          # Symlink system SDK into Buildozer platform directory to skip re-downloads
+          cp -rn $ANDROID_HOME/* "$BUILDOZER_SDK/" || true
+
       - name: Setup Android NDK r25b
         run: |
           mkdir -p ~/.buildozer/android/platform
           curl -L -sS https://dl.google.com/android/repository/android-ndk-r25b-linux.zip -o /tmp/ndk.zip
           unzip -q /tmp/ndk.zip -d ~/.buildozer/android/platform/
           rm -f /tmp/ndk.zip
-
-      - name: Link Pre-installed SDK & Accept Licenses
-        run: |
-          BUILDOZER_SDK="$HOME/.buildozer/android/platform/android-sdk"
-          mkdir -p "$BUILDOZER_SDK"
-          
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root="$ANDROID_HOME" --licenses || true
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root="$ANDROID_HOME" "platforms;android-33" "build-tools;33.0.2" "platform-tools"
-
-          cp -r $ANDROID_HOME/* "$BUILDOZER_SDK/" || true
 
       - name: Build APK with Buildozer
         env:
@@ -73,6 +81,7 @@ jobs:
           ANDROID_NDK: "/home/runner/.buildozer/android/platform/android-ndk-r25b"
           APP_ANDROID_NDK_HOME: "/home/runner/.buildozer/android/platform/android-ndk-r25b"
         run: |
+          # Remove higher default NDK versions if generated dynamically
           rm -rf ~/.buildozer/android/platform/android-ndk-r28*
           rm -rf ~/.buildozer/android/platform/build-*
 
