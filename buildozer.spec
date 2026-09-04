@@ -1,65 +1,67 @@
 [app]
 
 # (str) Title of your application
-title = J.A.R.V.I.S
+title = JARVIS Mobile
 
 # (str) Package name
-package.name = jarvis
+package.name = jarvisapp
 
-# (str) Package domain
-package.domain = org.arnod
+# (str) Package domain (needed for android/ios packaging)
+package.domain = org.jarvis
 
-# (str) Source code directory
+# (str) Source code where the main.py file is located
 source.dir = .
 
-# (list) Source files to include
-source.include_exts = py,png,jpg,kv,atlas,json,txt,wav,mp3,ico
+# (list) Source files to include (let empty to include all the files)
+source.include_exts = py,png,jpg,kv,atlas,json,txt
 
 # (str) Application versioning
-version = 0.1
+version = 1.0.0
 
-# (str) Application icon file
-icon.filename = %(source.dir)s/jarvis.ico
+# (list) Application requirements
+# comma separated e.g. requirements = sqlite3,kivy
+requirements = python3,kivy,plyer,requests,urllib3,certifi,idna,charset_normalizer
 
-# (list) Requirements: Explicitly include python3, kivy, and common dependencies
-requirements = python3,kivy==2.3.0,requests,urllib3,certifi,idna,chardet,plyer
-
-# (str) Supported orientation
+# (str) Supported orientation (one of landscape, sensorLandscape, portrait or all)
 orientation = portrait
 
-# (bool) Fullscreen mode
+# (bool) Indicate if the application should be fullscreen or not
 fullscreen = 0
 
 # (list) Permissions
-android.permissions = INTERNET, RECORD_AUDIO, ACCESS_NETWORK_STATE, READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE
+android.permissions = INTERNET, RECORD_AUDIO, WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE
 
-[buildozer]
-
-# (int) Log level (2 = debug)
-log_level = 2
-
-# (int) Display warning if buildozer is run as root
-warn_on_root = 1
-
-[app:android]
-
-# (int) Target Android API
+# (int) Target Android API, should be as high as possible.
 android.api = 33
 
-# (int) Minimum API supported
-android.minapi = 24
+# (int) Minimum API your APK will support.
+android.minapi = 21
 
 # (str) Android NDK version
 android.ndk = 25b
 
-# (bool) Automatically accept SDK licenses
-android.accept_sdk_license = True
+# (bool) Use --private data directory (1) or --dir public storage (0)
+android.private_storage = 1
 
-# (list) Architectures to build for
-android.archs = arm64-v8a
+# (list) List of Java .jar files to add to the libs so that your application can use them
+# android.add_jars = foo.jar,bar.jar
 
-# (bool) Enable AndroidX / Multidex support
-android.enable_multidex = True
+# (list) List of Java files to add to the android project
+# android.add_src =
 
-# (list) Gradle dependencies
-android.gradle_dependencies =
+# (str) Android logcat filters to use
+android.logcat_filters = *:S python:D
+
+# (bool) Copy library instead of making a libdir and symlinks.
+android.copy_libs = 1
+
+# (str) The Android arch to build for, choices: armeabi-v7a, arm64-v8a, x86, x86_64
+android.archs = arm64-v8a, armeabi-v7a
+
+[buildozer]
+
+# (int) Log level (0 = error only, 1 = info, 2 = debug (with command output))
+log_level = 2
+
+# (int) Display warning if buildozer is run as root (0 = disable, 1 = enable)
+warn_on_root = 1
