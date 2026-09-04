@@ -1,19 +1,5 @@
 [app]
-title = J.A.R.V.I.S
-package.name = jarvis
-package.domain = org.arnod
-source.dir = .
-source.include_exts = py,png,jpg,kv,atlas,json,txt,wav,mp3
-version = 0.1
-
-requirements = python3,kivy
-
-orientation = portrait
-fullscreen = 0
-
-[buildozer]
-log_level = 2
-warn_on_root = 1
+# ... keep existing app configurations ...
 
 [app:android]
 android.api = 33
@@ -23,3 +9,6 @@ android.ndk_path = ~/.buildozer/android/platform/android-ndk-r25b
 android.accept_sdk_license = True
 android.archs = arm64-v8a
 android.allow_backup = True
+
+# ENABLE MULTIDEX TO FIX D8/DX HANGS
+android.enable_multidex = True
