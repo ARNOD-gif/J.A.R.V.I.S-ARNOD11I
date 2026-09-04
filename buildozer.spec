@@ -18,12 +18,13 @@ source.include_exts = py,png,jpg,kv,atlas,json,txt,wav,mp3,ico
 # (str) Application versioning
 version = 0.1
 
-# (str) Application icon file (.ico is supported automatically via ImageMagick in our build pipeline)
+# (str) Application icon file
 icon.filename = %(source.dir)s/jarvis.ico
 
 # (list) Application requirements
-# Add any pure-Python packages your main.py imports here (separated by commas)
-requirements = python3,kivy
+# IMPORTANT: Only list pure Python modules or official p4a recipes here.
+# Do NOT list desktop-only libraries like pyttsx3, pyaudio, speech_recognition, win32com, or tkinter!
+requirements = python3,kivy==2.3.0,requests,urllib3,certifi,idna,chardet,plyer
 
 # (str) Supported orientation (one of landscape, sensorLandscape, portrait or all)
 orientation = portrait
@@ -31,7 +32,7 @@ orientation = portrait
 # (bool) Indicate if the application should be fullscreen or not
 fullscreen = 0
 
-# (list) Permissions
+# (list) Permissions needed by the app
 android.permissions = INTERNET, RECORD_AUDIO, ACCESS_NETWORK_STATE
 
 [buildozer]
