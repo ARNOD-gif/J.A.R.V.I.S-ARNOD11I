@@ -55,20 +55,27 @@ jobs:
         pip install "cython<3.0.0"
         pip install buildozer
 
-    - name: Pre-install Android SDK Build-Tools (Fixes Aidl Error)
+    - name: Setup Android SDK & Fix SDKManager Path
       run: |
-        mkdir -p $HOME/.buildozer/android/platform/android-sdk
-        export ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
+        # Define paths
+        SDK_DIR=$HOME/.buildozer/android/platform/android-sdk
+        mkdir -p $SDK_DIR
         
         # Download Android Command Line Tools
-        wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
-        unzip -q cmdline-tools.zip -d $ANDROID_HOME/cmdline-tools
-        mkdir -p $ANDROID_HOME/cmdline-tools/latest
-        mv $ANDROID_HOME/cmdline-tools/cmdline-tools/* $ANDROID_HOME/cmdline-tools/latest/ 2>/dev/null || true
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
+        unzip -q cmdline-tools.zip -d $SDK_DIR/cmdline-tools
         
-        # Accept Licenses and Install Build-Tools
-        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2" "platforms;android-33" "platform-tools"
+        # Set up modern cmdline-tools directory layout
+        mkdir -p $SDK_DIR/cmdline-tools/latest
+        mv $SDK_DIR/cmdline-tools/cmdline-tools/* $SDK_DIR/cmdline-tools/latest/ 2>/dev/null || true
+        
+        # FIX: Create legacy 'tools/bin' symlink so Buildozer finds sdkmanager
+        mkdir -p $SDK_DIR/tools
+        ln -s $SDK_DIR/cmdline-tools/latest/bin $SDK_DIR/tools/bin
+
+        # Accept Licenses and Install Build-Tools & Platform API
+        yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --licenses || true
+        $SDK_DIR/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2" "platforms;android-33" "platform-tools"
 
     - name: Build APK with Buildozer
       run: |
