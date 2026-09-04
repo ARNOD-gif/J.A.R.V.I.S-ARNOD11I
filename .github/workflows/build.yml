@@ -47,16 +47,23 @@ jobs:
           python -m pip install --upgrade pip setuptools
           pip install "Cython==0.29.36" "buildozer>=1.5.0" "python-for-android>=2024.1.21"
 
-      - name: Pre-accept SDK Licenses
+      - name: Prepare Android SDK & Symlink legacy sdkmanager
         run: |
-          # Write all license hashes directly so sdkmanager/buildozer never prompts
-          mkdir -p ~/.buildozer/android/platform/android-sdk/licenses
-          mkdir -p "$ANDROID_HOME/licenses"
-          
+          # Define Buildozer SDK path
+          BUILDOZER_SDK="$HOME/.buildozer/android/platform/android-sdk"
+          mkdir -p "$BUILDOZER_SDK/licenses"
+
+          # Pre-accept licenses directly into Buildozer SDK
           LICENSES_CONTENT="\n89330d32252cd225f11c5fe196d1112b640a1da9\nd56f5187479451eabf01fb78af6d623503d065a9\n24333f8a63718c309d6314270d1e4f0250b1b2d5\n84831b94fe1430d0feb6500911a0873887256e35\nd9050156456102e513847e2606e872d671276082\n601007b94ed797dd23565d7bd047c8926f799fcd"
-          
-          echo -e "$LICENSES_CONTENT" > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
-          echo -e "$LICENSES_CONTENT" > "$ANDROID_HOME/licenses/android-sdk-license"
+          echo -e "$LICENSES_CONTENT" > "$BUILDOZER_SDK/licenses/android-sdk-license"
+
+          # Copy cmdline-tools from runner environment to Buildozer SDK
+          mkdir -p "$BUILDOZER_SDK/cmdline-tools"
+          cp -r $ANDROID_HOME/cmdline-tools/* "$BUILDOZER_SDK/cmdline-tools/"
+
+          # Symlink cmdline-tools/latest/bin -> tools/bin for legacy Buildozer compatibility
+          mkdir -p "$BUILDOZER_SDK/tools"
+          ln -sf "$BUILDOZER_SDK/cmdline-tools/latest/bin" "$BUILDOZER_SDK/tools/bin"
 
       - name: Build APK with Buildozer
         env:
