@@ -7,28 +7,69 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Cache Buildozer directories
-        uses: actions/cache@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          path: |
-            .buildozer
-            ~/.buildozer
-          key: buildozer-${{ hashFiles('buildozer.spec') }}
-          restore-keys: |
-            buildozer-
+          python-version: '3.11'
 
-      - name: Build APK using prebuilt Kivy Docker image
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install System Dependencies
         run: |
-          docker run --rm \
-            -v "${{ github.workspace }}:/home/user/hostcwd" \
-            -v "${{ github.workspace }}/.buildozer:/home/user/hostcwd/.buildozer" \
-            kivy/buildozer:latest android debug
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ccache libncursesw5-dev
+
+      - name: Install Cython & Buildozer
+        run: |
+          python -m pip install --upgrade pip setuptools
+          pip install "Cython==0.29.36" "buildozer>=1.5.0"
+
+      - name: Force Install Android NDK r25b
+        run: |
+          NDK_DIR="$HOME/.buildozer/android/platform/android-ndk-r25b"
+          mkdir -p "$HOME/.buildozer/android/platform"
+          
+          curl -sS https://dl.google.com/android/repository/android-ndk-r25b-linux.zip -o /tmp/ndk.zip
+          unzip -q /tmp/ndk.zip -d "$HOME/.buildozer/android/platform/"
+          mv "$HOME/.buildozer/android/platform/android-ndk-r25b" "$NDK_DIR" || true
+          rm -f /tmp/ndk.zip
+
+      - name: Configure SDK Layout
+        run: |
+          BUILDOZER_SDK="$HOME/.buildozer/android/platform/android-sdk"
+          mkdir -p "$BUILDOZER_SDK"
+          ln -sf $ANDROID_HOME/* "$BUILDOZER_SDK/" || true
+
+          yes | sdkmanager --licenses || true
+          sdkmanager "platforms;android-33" "build-tools;33.0.2" "platform-tools"
+
+          mkdir -p "$BUILDOZER_SDK/tools/bin"
+          ln -sf $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "$BUILDOZER_SDK/tools/bin/sdkmanager" || true
+
+      - name: Build APK with Buildozer
+        env:
+          MAKEFLAGS: "-j2"
+          ANDROID_NDK_HOME: "/home/runner/.buildozer/android/platform/android-ndk-r25b"
+          ANDROID_NDK_ROOT: "/home/runner/.buildozer/android/platform/android-ndk-r25b"
+          ANDROID_NDK: "/home/runner/.buildozer/android/platform/android-ndk-r25b"
+        run: |
+          rm -rf ~/.buildozer/android/platform/android-ndk-r28*
+          rm -rf ~/.buildozer/android/platform/build-*
+
+          buildozer -v android debug
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
