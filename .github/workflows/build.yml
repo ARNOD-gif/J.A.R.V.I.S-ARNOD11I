@@ -1,86 +1,14 @@
-name: Build J.A.R.V.I.S APK
-
-on:
-  push:
-    branches: [ "main", "master" ]
-  workflow_dispatch:
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: Set up Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Install System Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            build-essential \
-            ccache \
-            git \
-            libncursesw5-dev \
-            libssl-dev \
-            libffi-dev \
-            zip \
-            unzip \
-            autoconf \
-            libtool \
-            pkg-config \
-            cmake
-
-      - name: Install Cython & Buildozer
-        run: |
-          python -m pip install --upgrade pip setuptools
-          pip install "Cython==0.29.36" "buildozer>=1.5.0" "python-for-android>=2024.1.21"
-
-      - name: Setup Android NDK r25b
-        run: |
-          mkdir -p ~/.buildozer/android/platform
-          curl -L -sS https://dl.google.com/android/repository/android-ndk-r25b-linux.zip -o /tmp/ndk.zip
-          unzip -q /tmp/ndk.zip -d ~/.buildozer/android/platform/
-          rm -f /tmp/ndk.zip
-
-      - name: Link Pre-installed SDK & Accept Licenses
-        run: |
-          BUILDOZER_SDK="$HOME/.buildozer/android/platform/android-sdk"
-          mkdir -p "$BUILDOZER_SDK"
-          
-          # Accept licenses using system sdkmanager
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root="$ANDROID_HOME" --licenses || true
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root="$ANDROID_HOME" "platforms;android-33" "build-tools;33.0.2" "platform-tools"
-
-          # Symlink system SDK into Buildozer's expected path
-          cp -r $ANDROID_HOME/* "$BUILDOZER_SDK/" || true
-
-      - name: Build APK with Buildozer
+- name: Build APK with Buildozer
         env:
           MAKEFLAGS: "-j2"
+          _JAVA_OPTIONS: "-Xmx4096m -XX:+UseG1GC"
+          GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.jvmargs='-Xmx4096m -XX:MaxMetaspaceSize=1024m'"
           ANDROID_NDK_HOME: "/home/runner/.buildozer/android/platform/android-ndk-r25b"
           ANDROID_NDK_ROOT: "/home/runner/.buildozer/android/platform/android-ndk-r25b"
           ANDROID_NDK: "/home/runner/.buildozer/android/platform/android-ndk-r25b"
           APP_ANDROID_NDK_HOME: "/home/runner/.buildozer/android/platform/android-ndk-r25b"
         run: |
-          # Clear any cached NDK r28 or failed builds
           rm -rf ~/.buildozer/android/platform/android-ndk-r28*
           rm -rf ~/.buildozer/android/platform/build-*
 
           buildozer -v android debug
-
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: jarvis-apk
-          path: bin/*.apk
