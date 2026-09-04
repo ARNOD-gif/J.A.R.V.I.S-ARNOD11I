@@ -6,13 +6,13 @@ title = J.A.R.V.I.S
 # (str) Package name
 package.name = jarvis
 
-# (str) Package domain (needed for android/ios packaging)
+# (str) Package domain
 package.domain = org.arnod
 
-# (str) Source code where the main.py live
+# (str) Source code directory
 source.dir = .
 
-# (list) Source files to include (file extensions)
+# (list) Source files to include
 source.include_exts = py,png,jpg,kv,atlas,json,txt,wav,mp3,ico
 
 # (str) Application versioning
@@ -21,26 +21,24 @@ version = 0.1
 # (str) Application icon file
 icon.filename = %(source.dir)s/jarvis.ico
 
-# (list) Application requirements
-# IMPORTANT: Only list pure Python modules or official p4a recipes here.
-# Do NOT list desktop-only libraries like pyttsx3, pyaudio, speech_recognition, win32com, or tkinter!
+# (list) Requirements: Explicitly include python3, kivy, and common dependencies
 requirements = python3,kivy==2.3.0,requests,urllib3,certifi,idna,chardet,plyer
 
-# (str) Supported orientation (one of landscape, sensorLandscape, portrait or all)
+# (str) Supported orientation
 orientation = portrait
 
-# (bool) Indicate if the application should be fullscreen or not
+# (bool) Fullscreen mode
 fullscreen = 0
 
-# (list) Permissions needed by the app
-android.permissions = INTERNET, RECORD_AUDIO, ACCESS_NETWORK_STATE
+# (list) Permissions
+android.permissions = INTERNET, RECORD_AUDIO, ACCESS_NETWORK_STATE, READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE
 
 [buildozer]
 
-# (int) Log level (0 = error only, 1 = info, 2 = debug (with command output))
+# (int) Log level (2 = debug)
 log_level = 2
 
-# (int) Display warning if buildozer is run as root (0 = disable, 1 = enable)
+# (int) Display warning if buildozer is run as root
 warn_on_root = 1
 
 [app:android]
@@ -62,3 +60,6 @@ android.archs = arm64-v8a
 
 # (bool) Enable AndroidX / Multidex support
 android.enable_multidex = True
+
+# (list) Gradle dependencies
+android.gradle_dependencies =
