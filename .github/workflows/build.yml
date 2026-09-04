@@ -2,9 +2,9 @@ name: Build Android APK
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ "main", "master" ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ "main", "master" ]
   workflow_dispatch:
 
 jobs:
@@ -12,78 +12,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
+      - name: Build with Buildozer
+        uses: Artemis-Fast/action-buildozer@v1
+        with:
+          workdir: .
+          buildozer_version: stable
 
-    - name: Set up Java 11
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: '11'
-
-    - name: Install System Dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          build-essential \
-          git \
-          ffmpeg \
-          libsdl2-dev \
-          libsdl2-image-dev \
-          libsdl2-mixer-dev \
-          libsdl2-ttf-dev \
-          libportmidi-dev \
-          libswscale-dev \
-          libavformat-dev \
-          libavcodec-dev \
-          zlib1g-dev \
-          libgstreamer1.0-dev \
-          gstreamer1.0-plugins-base \
-          gstreamer1.0-plugins-good \
-          ccache \
-          zip \
-          unzip
-
-    - name: Install Buildozer & Cython
-      run: |
-        pip install --upgrade pip
-        pip install "cython<3.0.0"
-        pip install buildozer
-
-    - name: Symlink System Android SDK to Buildozer Path
-      run: |
-        BUILDOZER_SDK_DIR=$HOME/.buildozer/android/platform/android-sdk
-        mkdir -p $BUILDOZER_SDK_DIR
-        
-        ln -s $ANDROID_HOME/build-tools $BUILDOZER_SDK_DIR/build-tools
-        ln -s $ANDROID_HOME/platforms $BUILDOZER_SDK_DIR/platforms
-        ln -s $ANDROID_HOME/platform-tools $BUILDOZER_SDK_DIR/platform-tools
-        
-        mkdir -p $BUILDOZER_SDK_DIR/tools
-        ln -s $ANDROID_HOME/cmdline-tools/latest/bin $BUILDOZER_SDK_DIR/tools/bin
-
-    - name: Accept Android SDK Licenses
-      run: |
-        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-
-    - name: Build APK with Buildozer
-      run: |
-        buildozer -v android debug
-
-    - name: Print Buildozer Log on Failure
-      if: failure()
-      run: |
-        if [ -f ~/.buildozer/buildozer.log ]; then
-          cat ~/.buildozer/buildozer.log | tail -n 250
-        fi
-
-    - name: Upload APK Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: package-debug-apk
-        path: bin/*.apk
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jarvis-apk
+          path: bin/*.apk
