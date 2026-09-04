@@ -20,11 +20,12 @@ jobs:
       with:
         python-version: '3.10'
 
-    - name: Set up Java
+    # Fix: Use Java 11 instead of Java 17/25 so sdkmanager doesn't crash
+    - name: Set up Java 11
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
-        java-version: '17'
+        java-version: '11'
 
     - name: Install System Dependencies
       run: |
@@ -55,29 +56,16 @@ jobs:
         pip install "cython<3.0.0"
         pip install buildozer
 
-    - name: Setup Android SDK & Fix SDKManager Path
+    - name: Accept Android SDK Licenses
       run: |
-        # Define paths
-        SDK_DIR=$HOME/.buildozer/android/platform/android-sdk
-        mkdir -p $SDK_DIR
-        
-        # Download Android Command Line Tools
-        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
-        unzip -q cmdline-tools.zip -d $SDK_DIR/cmdline-tools
-        
-        # Set up modern cmdline-tools directory layout
-        mkdir -p $SDK_DIR/cmdline-tools/latest
-        mv $SDK_DIR/cmdline-tools/cmdline-tools/* $SDK_DIR/cmdline-tools/latest/ 2>/dev/null || true
-        
-        # FIX: Create legacy 'tools/bin' symlink so Buildozer finds sdkmanager
-        mkdir -p $SDK_DIR/tools
-        ln -s $SDK_DIR/cmdline-tools/latest/bin $SDK_DIR/tools/bin
-
-        # Accept Licenses and Install Build-Tools & Platform API
-        yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --licenses || true
-        $SDK_DIR/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2" "platforms;android-33" "platform-tools"
+        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
     - name: Build APK with Buildozer
+      env:
+        # Direct Buildozer to use GitHub Action's existing Java 11 and pre-installed Android SDK
+        JAVA_HOME: ${{ env.JAVA_HOME_11_X64 }}
+        ANDROID_SDK_ROOT: ${{ env.ANDROID_HOME }}
+        ANDROID_NDK_ROOT: ${{ env.ANDROID_NDK_HOME }}
       run: |
         buildozer -v android debug
 
