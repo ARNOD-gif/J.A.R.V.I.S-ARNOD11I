@@ -16,7 +16,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.10'
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
@@ -24,48 +24,63 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Install System Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends ccache libncursesw5-dev
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            ccache \
+            git \
+            libncursesw5-dev \
+            libssl-dev \
+            libffi-dev \
+            zip \
+            unzip \
+            autoconf \
+            libtool \
+            pkg-config \
+            cmake
 
       - name: Install Cython & Buildozer
         run: |
           python -m pip install --upgrade pip setuptools
-          pip install "Cython==0.29.36" "buildozer>=1.5.0"
+          pip install "Cython==0.29.36" "buildozer>=1.5.0" "python-for-android>=2024.1.21"
 
-      - name: Force Install Android NDK r25b
+      - name: Setup NDK r25b & SDK
         run: |
-          NDK_DIR="$HOME/.buildozer/android/platform/android-ndk-r25b"
-          mkdir -p "$HOME/.buildozer/android/platform"
-          
+          # 1. Download and extract NDK r25b
+          mkdir -p ~/.buildozer/android/platform
           curl -sS https://dl.google.com/android/repository/android-ndk-r25b-linux.zip -o /tmp/ndk.zip
-          unzip -q /tmp/ndk.zip -d "$HOME/.buildozer/android/platform/"
-          mv "$HOME/.buildozer/android/platform/android-ndk-r25b" "$NDK_DIR" || true
+          unzip -q /tmp/ndk.zip -d ~/.buildozer/android/platform/
           rm -f /tmp/ndk.zip
 
-      - name: Configure SDK Layout
-        run: |
-          BUILDOZER_SDK="$HOME/.buildozer/android/platform/android-sdk"
-          mkdir -p "$BUILDOZER_SDK"
-          ln -sf $ANDROID_HOME/* "$BUILDOZER_SDK/" || true
+          # 2. Setup SDK Layout
+          SDK_DIR="$HOME/.buildozer/android/platform/android-sdk"
+          mkdir -p "$SDK_DIR/cmdline-tools"
+          curl -sS https://dl.google.com/android/repository/commandlinetools-linux-9441913_latest.zip -o /tmp/cmdline.zip
+          unzip -q /tmp/cmdline.zip -d "$SDK_DIR/cmdline-tools"
+          mv "$SDK_DIR/cmdline-tools/cmdline-tools" "$SDK_DIR/cmdline-tools/latest"
+          rm -f /tmp/cmdline.zip
 
-          yes | sdkmanager --licenses || true
-          sdkmanager "platforms;android-33" "build-tools;33.0.2" "platform-tools"
+          # 3. Accept Licenses
+          mkdir -p "$SDK_DIR/licenses"
+          echo -e "24333f8a637b3702d1927e1501702586f96e3d94\n89330172875f108642f7217869b4e3ce443729b5\nd56f5187479451eabf01fb78af6dfcb131a6481e" > "$SDK_DIR/licenses/android-sdk-license"
+          echo -e "84831b9409646a918e30573bab4c9c91346d8abd" > "$SDK_DIR/licenses/android-sdk-preview-license"
 
-          mkdir -p "$BUILDOZER_SDK/tools/bin"
-          ln -sf $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "$BUILDOZER_SDK/tools/bin/sdkmanager" || true
+          "$SDK_DIR/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$SDK_DIR" \
+            "platforms;android-33" \
+            "build-tools;33.0.2" \
+            "platform-tools"
 
       - name: Build APK with Buildozer
         env:
           MAKEFLAGS: "-j2"
+          APP_ANDROID_NDK_HOME: "/home/runner/.buildozer/android/platform/android-ndk-r25b"
           ANDROID_NDK_HOME: "/home/runner/.buildozer/android/platform/android-ndk-r25b"
           ANDROID_NDK_ROOT: "/home/runner/.buildozer/android/platform/android-ndk-r25b"
           ANDROID_NDK: "/home/runner/.buildozer/android/platform/android-ndk-r25b"
         run: |
+          # Purge any residual or auto-downloaded NDK r28c caches
           rm -rf ~/.buildozer/android/platform/android-ndk-r28*
           rm -rf ~/.buildozer/android/platform/build-*
 
