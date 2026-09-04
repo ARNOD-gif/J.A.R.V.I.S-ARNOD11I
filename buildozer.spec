@@ -6,9 +6,9 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,json,txt,wav,mp3,ico
 version = 0.1
 
-# Direct pointer to your .ico file
 icon.filename = %(source.dir)s/jarvis.ico
 
+# Explicitly declare python3 and kivy
 requirements = python3,kivy
 
 orientation = portrait
